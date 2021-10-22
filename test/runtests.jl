@@ -14,8 +14,8 @@ using Test
     @test F(x) ≈ f(x)
 
     v = [0.83;0.78;0.65;1.11]
-    trans = MTFun.plan_transform(H,v)
-    itrans = MTFun.plan_itransform(H,v)
+    trans = QuantumTimeSteppers.plan_transform(H,v)
+    itrans = QuantumTimeSteppers.plan_itransform(H,v)
     @test v ≈ itrans*(trans*v)
     @test v ≈ trans*(itrans*v)
 
