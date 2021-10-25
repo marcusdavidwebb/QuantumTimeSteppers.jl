@@ -22,7 +22,7 @@ bandwidths(D::ConcreteDerivative{HFSE}) where HFSE <: HermiteFSE = D.order,D.ord
 Base.stride(D::ConcreteDerivative{HFSE}) where HFSE <: HermiteFSE = D.order
 
 function getindex(D::ConcreteDerivative{HermiteFSE{T},K,KK},k::Integer,j::Integer) where {T,K,KK}
-    # differentiation matrix does not depend on t!
+    # differentiation matrix does not depend on HermiteFSE.t (see Kropielnicka, Iserles, Schratz, Webb 2021)
     
     m = D.order
     bandind = j-k
@@ -137,20 +137,33 @@ function plan_Hermite_transform(n::Integer)
     return valweights, Q
 end
 
+function plan_Hemite_transform_coeff_scaling(n::Integer, t = 0.0)
+    # the coefficients should be weighted by these
+    if t == 0.0
+        coeffweights = ones(n+1)
+    else
+        x = points(HermiteFSE(t),n+1)
+        coeffweights = ((1+2.0im*t)/(1-2.0im*t)).^(0:.5:n/2) * exp(-1.0im*t*x.^2)/sqrt(1-2.0im*t)
+    end
+    return coeffweights
+end
+
 function plan_transform(S::HermiteFSE,vals::AbstractVector)
     valweights, Q = plan_Hermite_transform(length(vals)-1)
-    TransformPlan(S,(valweights,Q),Val{false})
+    coeffweights = plan_Hemite_transform_coeff_scaling(length(vals)-1, S.t)
+    TransformPlan(S,(valweights,Q,coeffweights),Val{false})
 end
 function plan_itransform(S::HermiteFSE,cfs::AbstractVector)
-    valweights, Q = plan_Hermite_transform(length(cfs)-1)
-    ITransformPlan(S,(valweights,Q),Val{false})
+    valweights, Q, coeffweights = plan_Hermite_transform(length(cfs)-1)
+    coeffweights = plan_Hemite_transform_coeff_scaling(length(vals)-1, S.t)
+    ITransformPlan(S,(valweights,Q,coeffweights),Val{false})
 end
 
 function *(P::TransformPlan{T,S,false},vals::AbstractVector) where {T,S<:HermiteFSE}
-    valweights,Q = P.plan
-    Q*(valweights.*vals)
+    valweights, Q, coeffweights = P.plan
+    (Q*(valweights.*vals)) ./ coeffweights
 end
 function *(P::ITransformPlan{T,S,false},cfs::AbstractVector) where {T,S<:HermiteFSE}
-    valweights,Q = P.plan
-    (Q' * cfs) ./ valweights
+    valweights, Q, coeffweights = P.plan
+    (Q' * (coeffweights.*cfs)) ./ valweights
 end
