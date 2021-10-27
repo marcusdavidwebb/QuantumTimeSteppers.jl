@@ -1,6 +1,6 @@
 # QuantumTimeSteppers
 
-'''
+```
 using ApproxFun, QuantumTimeSteppers, Plots, MTFun
 
 F = Fourier(-4..4)
@@ -37,4 +37,4 @@ tH, uH = Strang_evolve(u0H,V,ε,Δt,T,0);
     plot(uH[k],xlims=(-4,4),ylims=(-2,2))
 end
 
-'''
+```
