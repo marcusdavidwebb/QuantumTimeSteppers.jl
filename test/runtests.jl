@@ -1,8 +1,16 @@
 using QuantumTimeSteppers
+using ApproxFun
 using Test
 
 @testset "QuantumTimeSteppers.jl" begin
     H = HermiteFSE()
+
+    v = [0.83;0.78;0.65;1.11]
+    trans = QuantumTimeSteppers.plan_transform(H,v)
+    itrans = QuantumTimeSteppers.plan_itransform(H,v)
+    @test v ≈ itrans*(trans*v)
+    @test v ≈ trans*(itrans*v)
+
     f = x -> (1+x^2)*exp(-x^2 / 2)
     F = Fun(f,H)
     x = 0.78
@@ -12,13 +20,6 @@ using Test
     F = Fun(f,H)
     x = 0.78
     @test F(x) ≈ f(x)
-
-    v = [0.83;0.78;0.65;1.11]
-    trans = QuantumTimeSteppers.plan_transform(H,v)
-    itrans = QuantumTimeSteppers.plan_itransform(H,v)
-    @test v ≈ itrans*(trans*v)
-    @test v ≈ trans*(itrans*v)
-
 
     H = HermiteFSE()
     f = x -> sech(x)^2

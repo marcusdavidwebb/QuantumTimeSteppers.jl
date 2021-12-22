@@ -51,7 +51,7 @@ function getindex(D::ConcreteDerivative{HermiteFSE{T},K,KK},k::Integer,j::Intege
 end
 
 function evaluate(cfs::AbstractVector,Hspace::HermiteFSE,x)
-    # Clenshaw's algorithm (working implementation given here) can have overflow/underflow problems:
+    # Clenshaw's algorithm (working implementation given here for Hspace.t = 0) can have overflow/underflow problems:
     # T = eltype(x)
     # n = length(cfs)   
     # bk2 = zero(T)
@@ -65,21 +65,21 @@ function evaluate(cfs::AbstractVector,Hspace::HermiteFSE,x)
     T = eltype(x)
     t = Hspace.t
     x = x/sqrt(1+4*t^2)
-    cfs = cfs .* ((1+2*one(T)im*t)/(1-2*one(T)im*t)).^(zero(T) : one(T)/2 : n*one(T)/2)
-    n = length(cfs)
+    n = length(cfs)-1
+    cfs = cfs .* ((1+2*one(T)im*t)/(1-2*one(T)im*t)).^((0:n)*one(T)/2)
     ret = zero(T)
-    if (n > 0) ret += cfs[1] * exp(-x^2 / 2) * convert(T,π)^(-1/4) end
-    if (n > 1) ret += cfs[2] * x * exp(-x^2 / 2) * (4/convert(T,π))^(1/4) end
+    if (n ≥ 0) ret += cfs[1] * exp(-x^2 / 2) * convert(T,π)^(-1/4) end
+    if (n ≥ 1) ret += cfs[2] * x * exp.(-x^2 / 2) * (4/convert(T,π))^(1/4) end
     
-    if (n > 2)
+    if (n ≥ 2)
         hkm1 = convert(T,π)^(-1/4)       #h_0(x)
         hk = sqrt(one(T)*2) * x * hkm1  #h_1(x)
         sum_log_scale = zero(T)
-        for k = 2:n-1
+        for k = 2:n
             # hk = h_k(x), hkm1 = h_{k-1}(x) (actually, recaled versions thereof)
             hkm1, hk = hk, sqrt(one(T)*2/k)*x*hk - sqrt((k-one(T))/k)*hkm1
             # rescale values if necessary
-            scale = (x->(x<one(T)*100) ? one(T) : inv(x))(abs(hk))
+            scale = (s->(s<one(T)*100) ? one(T) : inv(s))(abs(hk))
             hk *= scale
             hkm1 *= scale
             # keep track of final rescaling factor
@@ -87,7 +87,7 @@ function evaluate(cfs::AbstractVector,Hspace::HermiteFSE,x)
             ret += cfs[k+1] * hk * exp(-x^2 / 2 - sum_log_scale)
         end
     end
-    ret = ret * exp(-one(T)im*t*x^2)/sqrt(1-2*one(T)im*t)
+    ret *= exp(-one(T)im*t*x^2)/sqrt(1-2*one(T)im*t)
     return ret
 end
 
@@ -154,8 +154,8 @@ function plan_transform(S::HermiteFSE,vals::AbstractVector)
     TransformPlan(S,(valweights,Q,coeffweights),Val{false})
 end
 function plan_itransform(S::HermiteFSE,cfs::AbstractVector)
-    valweights, Q, coeffweights = plan_Hermite_transform(length(cfs)-1)
-    coeffweights = plan_Hemite_transform_coeff_scaling(length(vals)-1, S.t)
+    valweights, Q = plan_Hermite_transform(length(cfs)-1)
+    coeffweights = plan_Hemite_transform_coeff_scaling(length(cfs)-1, S.t)
     ITransformPlan(S,(valweights,Q,coeffweights),Val{false})
 end
 
