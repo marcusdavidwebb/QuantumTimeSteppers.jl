@@ -79,7 +79,7 @@ function evaluate(cfs::AbstractVector,Hspace::HermiteFSE,x)
             # hk = h_k(x), hkm1 = h_{k-1}(x) (actually, recaled versions thereof)
             hkm1, hk = hk, sqrt(one(T)*2/k)*x*hk - sqrt((k-one(T))/k)*hkm1
             # rescale values if necessary
-            scale = (x->(x<one(T)) ? one(T) : inv(x))(abs(hk))
+            scale = (x->(x<one(T)*100) ? one(T) : inv(x))(abs(hk))
             hk *= scale
             hkm1 *= scale
             # keep track of final rescaling factor
@@ -117,7 +117,7 @@ function plan_Hermite_transform(n::Integer)
         # hk = h_k(x), hkm1 = h_{k-1}(x) (actually, recaled versions thereof)
         hkm1, hk = hk, sqrt(2/k)* x .* hk - sqrt((k-1)/k)*hkm1
         # rescale values if necessary
-        scale = (x->(x<1) ? 1 : inv(x)).(abs.(hk))
+        scale = (x->(x<100) ? 1 : inv(x)).(abs.(hk))
         hk .*= scale
         hkm1 .*=  scale
         Q[k+1,:] = hk
