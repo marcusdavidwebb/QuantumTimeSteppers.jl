@@ -1,3 +1,6 @@
+# The HermiteFSE basis consists of the functions
+
+
 struct HermiteFSE{T<:Real} <: Space{Line{false,T},T}
     t :: T
 end
@@ -94,7 +97,7 @@ end
 eval_Hermite_function(n::Integer,x::T, t=0.0) where T <: Number = evaluate([zeros(T,n);one(T)],HermiteFSE(t),x)
 
 ## Transforms for HermiteFSE space
-hasfasttransform(::HermiteFSE) = false
+hasfasttransform(::HermiteFSE) = true
 # Gauss-Hermite points
 points(Hspace::HermiteFSE,n::Int) = gausshermite(n)[1] * sqrt(1+4*(Hspace.t)^2)
 
@@ -143,7 +146,7 @@ function plan_Hemite_transform_coeff_scaling(n::Integer, t = 0.0)
         coeffweights = ones(n+1)
     else
         x = points(HermiteFSE(t),n+1)
-        coeffweights = ((1+2.0im*t)/(1-2.0im*t)).^(0:.5:n/2) * exp(-1.0im*t*x.^2)/sqrt(1-2.0im*t)
+        coeffweights = ((1+2.0im*t)/(1-2.0im*t)).^(0:.5:n/2) .* exp.(-1.0im*t*x.^2)/sqrt(1-2.0im*t)
     end
     return coeffweights
 end
