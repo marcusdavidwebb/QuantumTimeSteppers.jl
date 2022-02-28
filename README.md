@@ -14,7 +14,7 @@ tF, uF = Strang_evolve(u0F,V,ε,Δt,T,0);
     plot(uF[k],ylims=(-2,2))
 end
 
-MT = MalmquistTakenaka(10.0im)
+MT = MalmquistTakenaka()
 u0MT = Fun(x -> exp(10im*x)*exp(-30*(x+2.0)^2),MT,1024)
 Δt = 0.01
 ε = 0.01
